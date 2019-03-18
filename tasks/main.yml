@@ -1,0 +1,29 @@
+---
+- name: Create mount points at /grafana & /prometheus
+  file:
+          path: "{{ item }}"
+          state: directory
+          mode: 0777
+  with_items:
+          - /grafana
+          - /prometheus
+
+- name: Mount NFS shares
+  mount:
+          name: "{{ name }}"
+          src: " {{hostvars[groups['nfs_server'] }}:{{ nfs_folder }}"
+          fstype: nfs
+          opts: default,nobootwait
+          dump: 0
+          passno: 2
+          state: mounted
+
+- name: Clone docker-grafana repository
+  command: "git clone https://github.com/moorcito/docker-grafana.git"
+  args:
+          chdir: /tmp
+
+- name: docker-compose up -d
+  command: docker-compose up -d
+  args:
+          chdir: /tmp/docker-grafana
